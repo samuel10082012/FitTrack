@@ -1,0 +1,16 @@
+FITTRACK TESTVERSIE
+
+Bestanden:
+- index.html: de app
+- manifest.webmanifest: instellingen voor installeren als webapp
+- sw.js: eenvoudige offline-cache
+
+BELANGRIJK:
+Dit is een lokale prototypeversie. Gegevens worden op het apparaat opgeslagen.
+Er is nog geen echte online accountserver, sociale community, AI-coach, Apple Health/Watch-koppeling of commerciële muziekbibliotheek.
+GPS werkt alleen wanneer de browser locatietoegang toestaat en de pagina actief blijft; iPhone kan achtergrondmeting beperken.
+
+Om op iPhone als webapp te installeren:
+1. Zet deze map op een HTTPS-webhost (bijvoorbeeld een eigen hostingdienst).
+2. Open de website in Safari.
+3. Tik op Deel -> Zet op beginscherm.
