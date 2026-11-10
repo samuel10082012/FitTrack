@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#080d0b">
+<link rel="manifest" href="manifest.webmanifest">
+<title>FitTrack</title>
+<style>
+:root{--accent:#27e879;--bg:#080d0b;--panel:#121a17;--panel2:#1a2420;--text:#f5f8f6;--muted:#9ba9a1;--line:#26332d}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding-bottom:88px}
+header{padding:18px 18px 8px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#080d0bf2;backdrop-filter:blur(12px);z-index:4}
+.logo{font-weight:900;font-size:23px;letter-spacing:-1px}.logo span{color:var(--accent)}button{border:0;border-radius:13px;padding:12px 15px;background:var(--accent);color:#06120a;font-weight:800;font-size:14px;cursor:pointer}
+button.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--line)}button.small{padding:8px 11px;font-size:12px}
+main{padding:10px 16px;max-width:760px;margin:auto}.page{display:none}.page.active{display:block}
+h1{font-size:27px;margin:12px 0 4px}h2{font-size:18px;margin:22px 0 12px}h3{margin:0 0 7px;font-size:16px}.muted{color:var(--muted)}.smalltxt{font-size:12px;color:var(--muted)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:16px;margin:12px 0}
+.hero{background:linear-gradient(135deg,#0d4429,#10251b 70%);border:1px solid #1d7445}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.stat{background:var(--panel2);padding:14px;border-radius:16px}.stat strong{font-size:23px;display:block;margin:5px 0}.accent{color:var(--accent)}
+.pills{display:flex;gap:8px;flex-wrap:wrap}.pill{background:var(--panel2);padding:9px 12px;border-radius:99px;font-size:12px;color:var(--muted)}
+input,select,textarea{width:100%;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:12px;margin:6px 0 12px;font:inherit}
+label{font-size:12px;color:var(--muted)}.exercise{display:grid;grid-template-columns:1fr 75px 75px;gap:7px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.exercise input{margin:0;padding:9px}.nav{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-around;background:#0c120ff2;border-top:1px solid var(--line);padding:9px 3px calc(9px + env(safe-area-inset-bottom));z-index:8;backdrop-filter:blur(14px)}
+.nav button{background:none;color:var(--muted);padding:5px 3px;font-size:10px;display:flex;flex-direction:column;gap:4px;align-items:center;flex:1}.nav button.active{color:var(--accent)}.nav b{font-size:19px}
+.bigtime{font-size:40px;font-weight:900;text-align:center;margin:12px}.bar{height:8px;background:var(--panel2);border-radius:20px;overflow:hidden}.bar span{display:block;height:100%;background:var(--accent);width:40%}
+canvas{width:100%;height:150px;background:var(--panel2);border-radius:14px}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#e9fff1;color:#06120a;padding:10px 16px;border-radius:30px;display:none;z-index:10;font-weight:700}
+a{color:var(--accent)}.danger{color:#ff7777}
+@media(min-width:650px){main{padding:16px 24px}.grid{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body>
+<header><div class="logo">Fit<span>Track</span></div><button class="secondary small" onclick="show('settings')">⚙ Instellingen</button></header>
+<main>
+<section id="home" class="page active">
+<h1 id="greeting">Hoi sporter! 👋</h1><div class="muted">Klaar om vandaag lekker te bewegen?</div>
+<div class="card hero"><div class="smalltxt">JOUW VOLGENDE TRAINING</div><h2 id="nextName" style="margin:8px 0">Full body training</h2><div class="muted">Zelf aanpasbaar • ongeveer 30 minuten</div><br><button onclick="show('workout')">Start training →</button></div>
+<h2>Jouw voortgang</h2><div class="grid">
+<div class="stat">🏋️ <strong id="sessions">0</strong><span class="smalltxt">Trainingen</span></div>
+<div class="stat">⏱ <strong id="minutes">0 min</strong><span class="smalltxt">Actieve tijd</span></div>
+<div class="stat">🔥 <strong id="streak">0</strong><span class="smalltxt">Actieve dagen op rij</span></div>
+<div class="stat">🏅 <strong id="records">0</strong><span class="smalltxt">Persoonlijke records</span></div>
+</div>
+<h2>Snelle acties</h2><div class="grid">
+<button onclick="show('workout')">＋ Training starten</button><button class="secondary" onclick="show('routes')">📍 Route opnemen</button>
+<button class="secondary" onclick="show('stats')">📊 Voortgang</button><button class="secondary" onclick="show('music')">♫ Muziek</button>
+</div>
+<div class="card"><div class="row"><h3>Jouw weekdoel</h3><span class="accent" id="goalLabel">3 trainingen</span></div><div class="bar"><span id="goalBar"></span></div><p class="smalltxt">Elke beweging telt. Neem ook voldoende rust.</p></div>
+</section>
+
+<section id="workout" class="page">
+<h1>Training</h1><p class="muted">Kies wat je vandaag wilt doen.</p>
+<div class="pills" id="sportPills"><button class="small" onclick="chooseSport('Krachttraining')">Kracht</button><button class="secondary small" onclick="chooseSport('Hardlopen')">Hardlopen</button><button class="secondary small" onclick="chooseSport('Voetbal')">Voetbal</button><button class="secondary small" onclick="chooseSport('Thuisworkout')">Thuisworkout</button><button class="secondary small" onclick="chooseSport('Fietsen')">Fietsen</button></div>
+<div class="card"><label>Naam van je training</label><input id="workoutName" value="Full body training"><label>Trainingsduur (minuten)</label><input id="duration" type="number" value="30" min="1"><h3>Oefeningen</h3>
+<div id="exerciseList">
+<div class="exercise"><span>Squat</span><input type="number" placeholder="kg"><input type="number" placeholder="reps"></div>
+<div class="exercise"><span>Push-up</span><input type="number" placeholder="kg"><input type="number" placeholder="reps"></div>
+<div class="exercise"><span>Plank (sec.)</span><input type="number" placeholder="tijd"><input type="number" placeholder="sets"></div>
+</div><button class="secondary small" onclick="addExercise()">＋ Oefening toevoegen</button></div>
+<div class="card"><h3>Trainingstimer</h3><div class="bigtime" id="timer">00:00</div><div class="row"><button onclick="startTimer()">Start</button><button class="secondary" onclick="pauseTimer()">Pauze</button><button class="secondary" onclick="resetTimer()">Reset</button></div></div>
+<button style="width:100%" onclick="finishWorkout()">Training opslaan ✓</button>
+</section>
+
+<section id="stats" class="page">
+<h1>Statistieken</h1><p class="muted">Bekijk hoe je vooruitgaat.</p>
+<div class="grid"><div class="stat">Trainingen<strong id="statSessions">0</strong></div><div class="stat">Minuten<strong id="statMinutes">0</strong></div><div class="stat">Records<strong id="statRecords">0</strong></div><div class="stat">Weekdoel<strong id="statGoal">0%</strong></div></div>
+<div class="card"><h3>Trainingen deze week</h3><canvas id="chart" width="600" height="220"></canvas></div>
+<div class="card"><h3>Persoonlijke records</h3><p id="recordList" class="muted">Je records verschijnen hier zodra je trainingen opslaat.</p></div>
+<div class="card"><h3>Voortgangsrapport</h3><p id="report" class="muted">Je hebt nog geen trainingen opgeslagen. Begin rustig en bouw stap voor stap op.</p></div>
+</section>
+
+<section id="routes" class="page">
+<h1>Routes & buiten sporten</h1><p class="muted">Neem een wandeling, hardloop- of fietsactiviteit op.</p>
+<div class="card"><div class="row"><h3>GPS-registratie</h3><span id="gpsStatus" class="accent">Niet gestart</span></div><div class="bigtime" id="gpsTime">00:00</div><div class="grid"><div class="stat">Afstand<strong id="distance">0,00 km</strong></div><div class="stat">Locatiepunten<strong id="points">0</strong></div></div><p class="smalltxt">GPS werkt zolang deze pagina actief is en locatietoegang is toegestaan. Achtergrondmeting op iPhone kan beperkt zijn.</p><div class="row"><button onclick="startGPS()">Start GPS</button><button class="secondary" onclick="stopGPS()">Stop</button></div></div>
+<div class="card"><h3>Opgeslagen routes</h3><p class="muted" id="routeList">Je opgeslagen routes verschijnen hier.</p></div>
+</section>
+
+<section id="music" class="page">
+<h1>Muziek</h1><p class="muted">Speel eigen audiobestanden af tijdens je training.</p>
+<div class="card"><h3>Jouw muziek</h3><input type="file" id="audioFile" accept="audio/*"><audio id="audio" controls style="width:100%;margin-top:10px"></audio><p class="smalltxt">Deze testversie bevat geen commerciële muziekcatalogus. Kies een audiobestand dat je zelf mag gebruiken.</p></div>
+<div class="card"><h3>FitTrack geluid</h3><label>Volume</label><input type="range" min="0" max="1" step=".05" value=".7" oninput="document.getElementById('audio').volume=this.value"></div>
+</section>
+
+<section id="settings" class="page">
+<h1>Instellingen</h1><div class="card"><h3>Profiel</h3><label>Gebruikersnaam</label><input id="username" placeholder="Jouw naam"><label>Weekdoel (aantal actieve dagen)</label><input id="weeklyGoal" type="number" min="1" max="7" value="3"><button onclick="saveSettings()">Opslaan</button></div>
+<div class="card"><h3>Uiterlijk</h3><label>Accentkleur</label><div class="pills"><button class="small" onclick="setColor('#27e879')">Groen</button><button class="small" style="background:#389bff" onclick="setColor('#389bff')">Blauw</button><button class="small" style="background:#e66acb" onclick="setColor('#e66acb')">Roze</button><button class="small" style="background:#a77bff" onclick="setColor('#a77bff')">Paars</button><button class="small" style="background:#ff754d" onclick="setColor('#ff754d')">Oranje</button></div></div>
+<div class="card"><h3>Feedback</h3><label>Fout melden of verbetering voorstellen</label><textarea id="feedback" rows="4" placeholder="Vertel wat er misgaat of wat beter kan..."></textarea><button onclick="sendFeedback()">Feedback opslaan</button><p class="smalltxt" id="feedbackStatus"></p></div>
+<div class="card"><h3>Gegevens</h3><button class="secondary" onclick="exportData()">Mijn gegevens downloaden</button> <button class="secondary" onclick="resetData()">Testgegevens wissen</button><p class="smalltxt">Gegevens worden in deze testversie op dit apparaat opgeslagen.</p></div>
+</section>
+</main>
+<nav class="nav">
+<button class="active" data-page="home" onclick="show('home')"><b>⌂</b>Home</button>
+<button data-page="workout" onclick="show('workout')"><b>▣</b>Training</button>
+<button data-page="stats" onclick="show('stats')"><b>▥</b>Statistieken</button>
+<button data-page="routes" onclick="show('routes')"><b>⌖</b>Routes</button>
+<button data-page="music" onclick="show('music')"><b>♫</b>Muziek</button>
+</nav><div class="toast" id="toast"></div>
+<script>
+const KEY='fittrack_v1';let data=JSON.parse(localStorage.getItem(KEY)||'{"sessions":[],"records":[],"routes":[],"username":"","goal":3,"color":"#27e879","streak":0}');
+function persist(){localStorage.setItem(KEY,JSON.stringify(data));render()}
+function toast(t){let e=document.getElementById('toast');e.textContent=t;e.style.display='block';setTimeout(()=>e.style.display='none',2200)}
+function show(id){document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));if(id==='stats')drawChart();window.scrollTo(0,0)}
+function chooseSport(s){document.getElementById('workoutName').value=s;toast(s+' gekozen')}
+function addExercise(){let d=document.createElement('div');d.className='exercise';d.innerHTML='<input placeholder="Oefening"><input type="number" placeholder="kg"><input type="number" placeholder="reps">';document.getElementById('exerciseList').appendChild(d)}
+let seconds=0,tick=null;function fmt(n){return String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0')}
+function startTimer(){if(!tick)tick=setInterval(()=>{seconds++;document.getElementById('timer').textContent=fmt(seconds)},1000)}
+function pauseTimer(){clearInterval(tick);tick=null}function resetTimer(){pauseTimer();seconds=0;document.getElementById('timer').textContent='00:00'}
+function finishWorkout(){let name=document.getElementById('workoutName').value||'Training';let mins=Math.max(1,Number(document.getElementById('duration').value)||1);data.sessions.push({name,mins,date:new Date().toISOString()});persist();toast('Training opgeslagen! 💪');resetTimer();show('home')}
+function render(){let n=data.sessions.length,m=data.sessions.reduce((a,x)=>a+x.mins,0);['sessions','statSessions'].forEach(id=>document.getElementById(id).textContent=n);document.getElementById('minutes').textContent=m+' min';document.getElementById('statMinutes').textContent=m;document.getElementById('streak').textContent=data.streak||0;document.getElementById('records').textContent=data.records.length;document.getElementById('statRecords').textContent=data.records.length;document.getElementById('goalLabel').textContent=data.goal+' actieve dagen';let pct=Math.min(100,Math.round(n/Math.max(1,data.goal)*100));document.getElementById('goalBar').style.width=pct+'%';document.getElementById('statGoal').textContent=pct+'%';document.getElementById('username').value=data.username||'';document.getElementById('weeklyGoal').value=data.goal;document.getElementById('greeting').textContent='Hoi '+(data.username||'sporter')+'! 👋';document.getElementById('recordList').textContent=data.records.length?data.records.join(' • '):'Nog geen persoonlijke records.';document.getElementById('report').textContent=n?`Je hebt ${n} trainingen gedaan en ${m} minuten bewogen. Blijf rustig opbouwen en plan voldoende herstel.`:'Je hebt nog geen trainingen opgeslagen. Begin rustig en bouw stap voor stap op.';document.getElementById('routeList').textContent=data.routes.length?data.routes.map(r=>r.date+' • '+r.km+' km').join('\\n'):'Je opgeslagen routes verschijnen hier.';document.documentElement.style.setProperty('--accent',data.color||'#27e879')}
+function saveSettings(){data.username=document.getElementById('username').value.trim();data.goal=Math.min(7,Math.max(1,Number(document.getElementById('weeklyGoal').value)||3));persist();toast('Instellingen opgeslagen')}
+function setColor(c){data.color=c;persist();toast('Kleur aangepast')}
+function sendFeedback(){let v=document.getElementById('feedback').value.trim();if(!v)return toast('Schrijf eerst je feedback');let arr=JSON.parse(localStorage.getItem('fittrack_feedback')||'[]');arr.push({text:v,date:new Date().toISOString()});localStorage.setItem('fittrack_feedback',JSON.stringify(arr));document.getElementById('feedback').value='';document.getElementById('feedbackStatus').textContent='Feedback op dit apparaat opgeslagen. Dankjewel!';}
+function exportData(){let blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='fittrack-gegevens.json';a.click();URL.revokeObjectURL(a.href)}
+function resetData(){if(confirm('Weet je zeker dat je alle lokale testgegevens wilt wissen?')){localStorage.removeItem(KEY);data={sessions:[],records:[],routes:[],username:'',goal:3,color:'#27e879'};persist();toast('Testgegevens gewist')}}
+function drawChart(){let c=document.getElementById('chart'),x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);let days=['Ma','Di','Wo','Do','Vr','Za','Zo'];let vals=days.map((_,i)=>data.sessions.filter(s=>{let d=new Date(s.date);return (d.getDay()+6)%7===i}).length);let max=Math.max(3,...vals);x.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--accent');vals.forEach((v,i)=>{let h=v/max*145;x.fillRect(35+i*80,175-h,34,h);x.fillStyle='#aab7af';x.font='16px sans-serif';x.fillText(days[i],38+i*80,205);x.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--accent')})}
+let gpsWatch=null,gpsStart=0,gpsSecs=0,gpsTimer=null,lastPos=null,total=0,count=0;
+function startGPS(){if(!navigator.geolocation)return toast('GPS niet beschikbaar in deze browser');if(gpsWatch!==null)return;gpsStart=Date.now();gpsSecs=0;total=0;count=0;lastPos=null;document.getElementById('gpsStatus').textContent='Bezig';gpsTimer=setInterval(()=>{gpsSecs++;document.getElementById('gpsTime').textContent=fmt(gpsSecs)},1000);gpsWatch=navigator.geolocation.watchPosition(p=>{let now={lat:p.coords.latitude,lon:p.coords.longitude};if(lastPos){let R=6371,dLat=(now.lat-lastPos.lat)*Math.PI/180,dLon=(now.lon-lastPos.lon)*Math.PI/180,a=Math.sin(dLat/2)**2+Math.cos(lastPos.lat*Math.PI/180)*Math.cos(now.lat*Math.PI/180)*Math.sin(dLon/2)**2;total+=R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))}lastPos=now;count++;document.getElementById('distance').textContent=total.toFixed(2).replace('.',',')+' km';document.getElementById('points').textContent=count},e=>toast('Locatiefout: '+e.message),{enableHighAccuracy:true,maximumAge:1000})}
+function stopGPS(){if(gpsWatch!==null)navigator.geolocation.clearWatch(gpsWatch);gpsWatch=null;clearInterval(gpsTimer);document.getElementById('gpsStatus').textContent='Gestopt';if(count){data.routes.push({date:new Date().toLocaleString('nl-NL'),km:total.toFixed(2)});persist();toast('Route opgeslagen')}}
+document.getElementById('audioFile').addEventListener('change',e=>{let f=e.target.files[0];if(f)document.getElementById('audio').src=URL.createObjectURL(f)});
+if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+render();
+</script>
+</body></html>

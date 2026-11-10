@@ -1,0 +1,9 @@
+{
+  "name": "FitTrack",
+  "short_name": "FitTrack",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#080d0b",
+  "theme_color": "#080d0b",
+  "description": "Jouw persoonlijke sport- en trainingsapp"
+}
