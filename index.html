@@ -15,7 +15,7 @@ button.secondary{background:var(--panel2);color:var(--text);border:1px solid var
 main{padding:10px 16px;max-width:760px;margin:auto}.page{display:none}.page.active{display:block}
 h1{font-size:27px;margin:12px 0 4px}h2{font-size:18px;margin:22px 0 12px}h3{margin:0 0 7px;font-size:16px}.muted{color:var(--muted)}.smalltxt{font-size:12px;color:var(--muted)}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:16px;margin:12px 0}
-.hero{background:linear-gradient(135deg,#0d4429,#10251b 70%);border:1px solid #1d7445}
+.hero{background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 24%,var(--panel)),var(--panel) 78%);border:1px solid color-mix(in srgb,var(--accent) 58%,var(--line))}
 .row{display:flex;align-items:center;justify-content:space-between;gap:10px}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.stat{background:var(--panel2);padding:14px;border-radius:16px}.stat strong{font-size:23px;display:block;margin:5px 0}.accent{color:var(--accent)}
 .pills{display:flex;gap:8px;flex-wrap:wrap}.pill{background:var(--panel2);padding:9px 12px;border-radius:99px;font-size:12px;color:var(--muted)}
 input,select,textarea{width:100%;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:12px;margin:6px 0 12px;font:inherit}
@@ -24,6 +24,7 @@ label{font-size:12px;color:var(--muted)}.exercise{display:grid;grid-template-col
 .nav button{background:none;color:var(--muted);padding:5px 3px;font-size:10px;display:flex;flex-direction:column;gap:4px;align-items:center;flex:1}.nav button.active{color:var(--accent)}.nav b{font-size:19px}
 .bigtime{font-size:40px;font-weight:900;text-align:center;margin:12px}.bar{height:8px;background:var(--panel2);border-radius:20px;overflow:hidden}.bar span{display:block;height:100%;background:var(--accent);width:40%}
 canvas{width:100%;height:150px;background:var(--panel2);border-radius:14px}
+.calendar-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;text-align:center}.calendar-day-name{font-size:11px;color:var(--muted);padding:6px 0}.calendar-day{min-height:42px;border-radius:11px;background:var(--panel2);color:var(--text);display:flex;align-items:center;justify-content:center;position:relative;font-size:13px}.calendar-day.today{outline:1px solid var(--accent)}.calendar-day.has-session:after{content:'';position:absolute;bottom:5px;width:5px;height:5px;border-radius:50%;background:var(--accent)}.calendar-day.empty{background:transparent}.calendar-day.selected{background:var(--accent);color:#06120a;font-weight:900}.calendar-list-item{padding:10px 0;border-bottom:1px solid var(--line)}
 .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#e9fff1;color:#06120a;padding:10px 16px;border-radius:30px;display:none;z-index:10;font-weight:700}
 a{color:var(--accent)}.danger{color:#ff7777}
 @media(min-width:650px){main{padding:16px 24px}.grid{grid-template-columns:repeat(4,1fr)}}
@@ -61,6 +62,16 @@ a{color:var(--accent)}.danger{color:#ff7777}
 <button style="width:100%" onclick="finishWorkout()">Training opslaan ✓</button>
 </section>
 
+
+<section id="calendar" class="page">
+<h1>Kalender</h1><p class="muted">Bekijk op welke dagen je hebt getraind.</p>
+<div class="card">
+<div class="calendar-head"><button class="secondary small" onclick="changeMonth(-1)">‹</button><h3 id="calendarMonth" style="margin:0"></h3><button class="secondary small" onclick="changeMonth(1)">›</button></div>
+<div id="calendarGrid" class="calendar-grid"></div>
+</div>
+<div class="card"><h3 id="calendarSelectedTitle">Trainingen</h3><div id="calendarSessions" class="muted">Kies een dag om je trainingen te bekijken.</div></div>
+</section>
+
 <section id="stats" class="page">
 <h1>Statistieken</h1><p class="muted">Bekijk hoe je vooruitgaat.</p>
 <div class="grid"><div class="stat">Trainingen<strong id="statSessions">0</strong></div><div class="stat">Minuten<strong id="statMinutes">0</strong></div><div class="stat">Records<strong id="statRecords">0</strong></div><div class="stat">Weekdoel<strong id="statGoal">0%</strong></div></div>
@@ -92,6 +103,7 @@ a{color:var(--accent)}.danger{color:#ff7777}
 <button class="active" data-page="home" onclick="show('home')"><b>⌂</b>Home</button>
 <button data-page="workout" onclick="show('workout')"><b>▣</b>Training</button>
 <button data-page="stats" onclick="show('stats')"><b>▥</b>Statistieken</button>
+<button data-page="calendar" onclick="show('calendar')"><b>▦</b>Kalender</button>
 <button data-page="routes" onclick="show('routes')"><b>⌖</b>Routes</button>
 <button data-page="music" onclick="show('music')"><b>♫</b>Muziek</button>
 </nav><div class="toast" id="toast"></div>
@@ -99,13 +111,39 @@ a{color:var(--accent)}.danger{color:#ff7777}
 const KEY='fittrack_v1';let data=JSON.parse(localStorage.getItem(KEY)||'{"sessions":[],"records":[],"routes":[],"username":"","goal":3,"color":"#27e879","streak":0}');
 function persist(){localStorage.setItem(KEY,JSON.stringify(data));render()}
 function toast(t){let e=document.getElementById('toast');e.textContent=t;e.style.display='block';setTimeout(()=>e.style.display='none',2200)}
-function show(id){document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));if(id==='stats')drawChart();window.scrollTo(0,0)}
+function show(id){document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));if(id==='stats')drawChart();if(id==='calendar')drawCalendar();window.scrollTo(0,0)}
 function chooseSport(s){document.getElementById('workoutName').value=s;toast(s+' gekozen')}
 function addExercise(){let d=document.createElement('div');d.className='exercise';d.innerHTML='<input placeholder="Oefening"><input type="number" placeholder="kg"><input type="number" placeholder="reps">';document.getElementById('exerciseList').appendChild(d)}
 let seconds=0,tick=null;function fmt(n){return String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0')}
 function startTimer(){if(!tick)tick=setInterval(()=>{seconds++;document.getElementById('timer').textContent=fmt(seconds)},1000)}
 function pauseTimer(){clearInterval(tick);tick=null}function resetTimer(){pauseTimer();seconds=0;document.getElementById('timer').textContent='00:00'}
 function finishWorkout(){let name=document.getElementById('workoutName').value||'Training';let mins=Math.max(1,Number(document.getElementById('duration').value)||1);data.sessions.push({name,mins,date:new Date().toISOString()});persist();toast('Training opgeslagen! 💪');resetTimer();show('home')}
+
+let calendarCursor = new Date(); calendarCursor.setDate(1);
+let calendarSelected = new Date();
+function changeMonth(step){calendarCursor.setMonth(calendarCursor.getMonth()+step);drawCalendar()}
+function sameDay(a,b){return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate()}
+function drawCalendar(){
+ const grid=document.getElementById('calendarGrid'); if(!grid)return;
+ const y=calendarCursor.getFullYear(),m=calendarCursor.getMonth();
+ document.getElementById('calendarMonth').textContent=new Intl.DateTimeFormat('nl-NL',{month:'long',year:'numeric'}).format(calendarCursor);
+ grid.innerHTML='';
+ ['Ma','Di','Wo','Do','Vr','Za','Zo'].forEach(d=>{let e=document.createElement('div');e.className='calendar-day-name';e.textContent=d;grid.appendChild(e)});
+ const first=(new Date(y,m,1).getDay()+6)%7,totalDays=new Date(y,m+1,0).getDate();
+ for(let i=0;i<first;i++){let e=document.createElement('div');e.className='calendar-day empty';grid.appendChild(e)}
+ for(let day=1;day<=totalDays;day++){
+  const date=new Date(y,m,day),has=data.sessions.some(s=>sameDay(new Date(s.date),date));
+  let e=document.createElement('button');e.type='button';e.className='calendar-day'+(sameDay(date,new Date())?' today':'')+(has?' has-session':'')+(sameDay(date,calendarSelected)?' selected':'');
+  e.textContent=day;e.onclick=()=>{calendarSelected=date;drawCalendar()};grid.appendChild(e);
+ }
+ const selected=data.sessions.filter(s=>sameDay(new Date(s.date),calendarSelected));
+ document.getElementById('calendarSelectedTitle').textContent=new Intl.DateTimeFormat('nl-NL',{dateStyle:'full'}).format(calendarSelected);
+ const list=document.getElementById('calendarSessions');
+ if(!selected.length){list.textContent='Geen opgeslagen trainingen op deze dag.';return}
+ list.innerHTML='';
+ selected.forEach(s=>{let e=document.createElement('div');e.className='calendar-list-item';let strong=document.createElement('strong');strong.textContent=s.name;let small=document.createElement('div');small.className='smalltxt';small.textContent=s.mins+' minuten';e.append(strong,small);list.appendChild(e)});
+}
+
 function render(){let n=data.sessions.length,m=data.sessions.reduce((a,x)=>a+x.mins,0);['sessions','statSessions'].forEach(id=>document.getElementById(id).textContent=n);document.getElementById('minutes').textContent=m+' min';document.getElementById('statMinutes').textContent=m;document.getElementById('streak').textContent=data.streak||0;document.getElementById('records').textContent=data.records.length;document.getElementById('statRecords').textContent=data.records.length;document.getElementById('goalLabel').textContent=data.goal+' actieve dagen';let pct=Math.min(100,Math.round(n/Math.max(1,data.goal)*100));document.getElementById('goalBar').style.width=pct+'%';document.getElementById('statGoal').textContent=pct+'%';document.getElementById('username').value=data.username||'';document.getElementById('weeklyGoal').value=data.goal;document.getElementById('greeting').textContent='Hoi '+(data.username||'sporter')+'! 👋';document.getElementById('recordList').textContent=data.records.length?data.records.join(' • '):'Nog geen persoonlijke records.';document.getElementById('report').textContent=n?`Je hebt ${n} trainingen gedaan en ${m} minuten bewogen. Blijf rustig opbouwen en plan voldoende herstel.`:'Je hebt nog geen trainingen opgeslagen. Begin rustig en bouw stap voor stap op.';document.getElementById('routeList').textContent=data.routes.length?data.routes.map(r=>r.date+' • '+r.km+' km').join('\\n'):'Je opgeslagen routes verschijnen hier.';document.documentElement.style.setProperty('--accent',data.color||'#27e879')}
 function saveSettings(){data.username=document.getElementById('username').value.trim();data.goal=Math.min(7,Math.max(1,Number(document.getElementById('weeklyGoal').value)||3));persist();toast('Instellingen opgeslagen')}
 function setColor(c){data.color=c;persist();toast('Kleur aangepast')}
@@ -118,6 +156,6 @@ function startGPS(){if(!navigator.geolocation)return toast('GPS niet beschikbaar
 function stopGPS(){if(gpsWatch!==null)navigator.geolocation.clearWatch(gpsWatch);gpsWatch=null;clearInterval(gpsTimer);document.getElementById('gpsStatus').textContent='Gestopt';if(count){data.routes.push({date:new Date().toLocaleString('nl-NL'),km:total.toFixed(2)});persist();toast('Route opgeslagen')}}
 document.getElementById('audioFile').addEventListener('change',e=>{let f=e.target.files[0];if(f)document.getElementById('audio').src=URL.createObjectURL(f)});
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
-render();
+render();drawCalendar();
 </script>
 </body></html>
